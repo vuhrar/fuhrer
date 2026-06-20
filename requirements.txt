@@ -6,3 +6,12 @@ chromadb
 sentence-transformers
 pillow
 opentelemetry-exporter-otlp
+streamlit
+PyPDF2
+pdfplumber
+python-docx
+chromadb
+sentence-transformers
+pillow
+opentelemetry-exporter-otlp
+pytesseract
