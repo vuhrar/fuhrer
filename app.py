@@ -20,7 +20,7 @@ st.set_page_config(page_title="Führer", layout="wide")
 try:
     from PIL import Image as PILImage
     logo = PILImage.open("IMG_5029.png")
-    st.image(logo, width=100)
+    st.image(logo, use_container_width=True)
 except:
     pass
 
