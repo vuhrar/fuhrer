@@ -8,6 +8,9 @@ import re
 from datetime import datetime
 
 st.set_page_config(page_title="Führer", layout="wide")
+from PIL import Image
+logo = Image.open("logo.png")
+st.image(logo, width=120)
 st.title("⚖️ Führer")
 st.markdown("🦾")
 
