@@ -15,12 +15,34 @@ from sentence_transformers import SentenceTransformer
 
 # ===== الإعدادات العامة =====
 st.set_page_config(page_title="Führer", layout="wide")
-try:
-    logo = Image.open("IMG_5029.png")
-    st.image(logo, use_container_width=True)
-except:
-    pass
-st.title("⚖️ Führer")
+st.set_page_config(page_title="Führer", layout="wide")
+
+# ===== خلفية الصورة =====
+import base64
+def set_bg_hack(main_bg):
+    main_bg_ext = "png"
+    st.markdown(
+         f"""
+         <style>
+         .stApp {{
+             background: url(data:image/{main_bg_ext};base64,{base64.b64encode(open(main_bg, "rb").read()).decode()});
+             background-size: cover;
+             background-attachment: fixed;
+         }}
+         /* شفافية للخلفيات الداخلية لتظهر الخلفية */
+         .stApp, .stMarkdown, .stTitle, .stSubheader, .stTextInput, .stButton, .stFileUploader, .stTabs {{
+             background-color: rgba(255, 255, 255, 0.85) !important;
+             border-radius: 10px;
+             padding: 5px;
+         }}
+         </style>
+         """,
+         unsafe_allow_html=True
+     )
+set_bg_hack("IMG_5029.png")
+
+# ===== العنوان الرئيسي =====
+st.title("🦾 Führer")
 st.markdown("")
 
 # ===== تحميل النماذج (مرة واحدة) =====
