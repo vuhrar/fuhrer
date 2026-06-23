@@ -1,9 +1,7 @@
-streamlit
-PyPDF2
-pdfplumber
-python-docx
+streamlit==1.41.0
+anthropic
 chromadb
 sentence-transformers
-pillow
-pytesseract
-opentelemetry-exporter-otlp
+pdfplumber
+PyPDF2
+python-docx
