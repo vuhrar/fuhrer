@@ -385,7 +385,7 @@ def build_system():
 - أجب بالعربية الفصحى{mem_ctx}"""
  
 st.markdown("**🤖 النموذج**")
-provider = st.selectbox("النموذج", [
+def provider = st.selectbox("النموذج", [
         "Gemini (Google) — مجاني",
         "Groq (مجاني وسريع)",
         "Claude (Anthropic)",
