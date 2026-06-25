@@ -383,7 +383,8 @@ def build_system():
 - استند للأنظمة السعودية واذكر المواد
 - كن محدداً وعملياً
 - أجب بالعربية الفصحى{mem_ctx}"""
- st.markdown("**🤖 النموذج**")
+ 
+st.markdown("**🤖 النموذج**")
     provider = st.selectbox("النموذج", [
         "Gemini (Google) — مجاني",
         "Groq (مجاني وسريع)",
