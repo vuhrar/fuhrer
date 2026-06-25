@@ -384,95 +384,32 @@ def build_system():
 - كن محدداً وعملياً
 - أجب بالعربية الفصحى{mem_ctx}"""
 
-def call_gemini(prompt, msgs, doc_ctx=""):
-    key = st.session_state.gemini_key
-    if not key: return "❌ أدخل Gemini API Key في الإعدادات"
-    system = build_system()
-    if doc_ctx: system += f"\n\nالمستندات:\n{doc_ctx[:4000]}"
-    contents = [{"role":"user","parts":[{"text":system+"\n\nالسؤال: "+prompt}]}]
-    for m in msgs[-30:]:
-        role = "user" if m["role"]=="user" else "model"
-        contents.append({"role":role,"parts":[{"text":m["content"]}]})
-    payload = json.dumps({"contents":contents}).encode()
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={key}"
-    req = urllib.request.Request(url, data=payload,
-          headers={"Content-Type":"application/json"}, method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=90) as r:
-            d = json.loads(r.read().decode())
-            return d["candidates"][0]["content"]["parts"][0]["text"]
-    except urllib.error.HTTPError as e:
-        return f"❌ Gemini {e.code}: {e.read().decode()[:200]}"
-    except Exception as e:
-        return f"❌ {e}"
 
-def call_claude(prompt, msgs, doc_ctx=""):
-    key = st.session_state.claude_key
-    if not key: return "❌ أدخل Claude API Key في الإعدادات"
-    system = build_system()
-    if doc_ctx: system += f"\n\nالمستندات:\n{doc_ctx[:4000]}"
-    messages = []
-    for m in msgs[-30:]:
-        messages.append({"role":m["role"],"content":m["content"]})
-    messages.append({"role":"user","content":prompt})
-    payload = json.dumps({
-        "model":"claude-sonnet-4-6",
-        "max_tokens":2048,
-        "system":system,
-        "messages":messages,
-    }).encode()
+import urllib.request
+import json
+import streamlit as st
+
+def call_any_api(api_url, payload, headers=None):
+    default_headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+    }
+    if headers:
+        default_headers.update(headers)
+        
     req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages",
-        data=payload,
-        headers={"Content-Type":"application/json",
-                 "x-api-key":key,
-                 "anthropic-version":"2023-06-01"},
-        method="POST")
+        api_url,
+        data=json.dumps(payload).encode(),
+        headers=default_headers,
+        method="POST"
+    )
     try:
         with urllib.request.urlopen(req, timeout=90) as r:
-            d = json.loads(r.read().decode())
-            return d["content"][0]["text"]
+            return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
-        return f"❌ Claude {e.code}: {e.read().decode()[:200]}"
+        return f"❌ Error {e.code}: {e.read().decode()[:200]}"
     except Exception as e:
         return f"❌ {e}"
-
-def call_groq(prompt, msgs, doc_ctx=""):
-    key = st.session_state.groq_key
-    if not key: return "❌ أدخل Groq API Key في الإعدادات"
-    system = build_system()
-    if doc_ctx: system += f"\n\nالمستندات:\n{doc_ctx[:4000]}"
-    messages = [{"role":"system","content":system}]
-    for m in msgs[-30:]:
-        messages.append({"role":m["role"],"content":m["content"]})
-    messages.append({"role":"user","content":prompt})
-    payload = json.dumps({
-        "model":"llama-3.3-70b-versatile",
-        "messages":messages,
-        "max_tokens":2048,
-    }).encode()
-    req = urllib.request.Request(
-        "https://api.groq.com/openai/v1/chat/completions",
-        data=payload,
-        headers={"Content-Type":"application/json",
-                 "Authorization":f"Bearer {key}"},
-        method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=90) as r:
-            d = json.loads(r.read().decode())
-            return d["choices"][0]["message"]["content"]
-    except urllib.error.HTTPError as e:
-        return f"❌ Groq {e.code}: {e.read().decode()[:200]}"
-    except Exception as e:
-        return f"❌ {e}"
-
-def call_ai(prompt, doc_ctx=""):
-    msgs = st.session_state.current_msgs
-    p = st.session_state.ai_provider
-    if "Gemini"  in p: return call_gemini(prompt, msgs, doc_ctx)
-    if "Claude"  in p: return call_claude(prompt, msgs, doc_ctx)
-    if "Groq"    in p: return call_groq(prompt, msgs, doc_ctx)
-    return "❌ اختر نموذجاً"
 
 # ══════════════════════════════════════════════
 # SIDEBAR
