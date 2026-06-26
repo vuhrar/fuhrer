@@ -38,7 +38,7 @@ class AIClient:
             contents = []
             # messages is expected to be list of dicts with role/content
             for m in messages:
-                role = m.get("role", "user")
+                role = "model" if m.get("role") == "assistant" else "user"
                 contents.append({"role": role, "parts": [{"text": m.get("content", "")} ]})
             # the last message is the user prompt
             payload = json.dumps({"contents": contents}).encode()
