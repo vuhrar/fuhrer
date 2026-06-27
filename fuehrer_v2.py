@@ -3,6 +3,7 @@ import streamlit as st
 import re, os, json, logging, hashlib, base64
 from datetime import datetime
 from typing import Dict, List, Any
+
 from utils import _bytes, _norm, new_sid
 from storage import (
     load_json, save_json, list_sessions, load_session, save_session, delete_session,
@@ -13,12 +14,41 @@ from rules_engine import RULES, apply_rules
 from ai_client import AIClient
 import config
 
+# ==================== المحركات الجديدة ====================
+try:
+    from core_engine import CoreEngine
+    from strategic_advisor import StrategicAdvisor
+    from case_dashboard import CaseDashboard
+    from advanced_extractor import AdvancedExtractor
+    from deep_analyzer import DeepAnalyzer
+    from procedural_analyzer import ProceduralAnalyzer
+    from discrepancy_analyzer import DiscrepancyAnalyzer
+    from response_generator import ResponseGenerator
+except ImportError as e:
+    # في حال عدم وجود الملفات، سيتم تعريف دوال بديلة
+    logging.warning(f"بعض المحركات غير موجودة: {e}")
+    CoreEngine = None
+    StrategicAdvisor = None
+    CaseDashboard = None
+    AdvancedExtractor = None
+    DeepAnalyzer = None
+    ProceduralAnalyzer = None
+    DiscrepancyAnalyzer = None
+    ResponseGenerator = None
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("fuehrer")
 
-st.set_page_config(page_title="Führer", page_icon="⚖️", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(
+    page_title="Führer",
+    page_icon="⚖️",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
 
-# ====================
+# ==================== CSS المتقدم ====================
+st.markdown("""
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap');
 
 * {
@@ -33,17 +63,11 @@ html, body, .stApp {
     background: #f7f8fa !important;
 }
 
-/* ================================
-   إخفاء الشريط الجانبي
-   ================================ */
 [data-testid="stSidebar"],
 [data-testid="stSidebarNav"] {
     display: none !important;
 }
 
-/* ================================
-   الهيدر (رأس الصفحة)
-   ================================ */
 .hdr {
     background: #ffffff;
     border-bottom: 2px solid #e8e8e8;
@@ -71,9 +95,6 @@ html, body, .stApp {
     border-radius: 2px;
 }
 
-/* ================================
-   التبويبات (Tabs)
-   ================================ */
 .stTabs [data-baseweb="tab-list"] {
     background: #f0f1f3;
     border-bottom: 1px solid #e0e0e0;
@@ -112,9 +133,6 @@ html, body, .stApp {
     box-shadow: 0 4px 16px rgba(0,0,0,0.02);
 }
 
-/* ================================
-   الأزرار
-   ================================ */
 .stButton button {
     background: #f0f1f3 !important;
     color: #222222 !important;
@@ -136,9 +154,6 @@ html, body, .stApp {
     transform: translateY(0px);
 }
 
-/* ================================
-   المدخلات (Inputs)
-   ================================ */
 .stTextInput input,
 .stTextArea textarea,
 .stSelectbox select {
@@ -159,9 +174,6 @@ html, body, .stApp {
     min-height: 120px;
 }
 
-/* ================================
-   رفع الملفات
-   ================================ */
 [data-testid="stFileUploader"] {
     background: #fafbfc !important;
     border: 2px dashed #d0d0d0 !important;
@@ -176,9 +188,6 @@ html, body, .stApp {
     color: #444444 !important;
 }
 
-/* ================================
-   المحادثة (Chat)
-   ================================ */
 .chat-wrap {
     overflow: hidden;
     min-height: 80px;
@@ -213,9 +222,6 @@ html, body, .stApp {
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-/* ================================
-   البطاقات (Cards)
-   ================================ */
 .result-card {
     background: #fafafc;
     border: 1px solid #e8e8e8;
@@ -225,9 +231,6 @@ html, body, .stApp {
     box-shadow: 0 1px 4px rgba(0,0,0,0.02);
 }
 
-/* ================================
-   الشارات (Badges)
-   ================================ */
 .badge {
     display: inline-block;
     background: #f0f1f3;
@@ -240,9 +243,6 @@ html, body, .stApp {
     margin: 3px 2px;
 }
 
-/* ================================
-   المقاييس (Metrics)
-   ================================ */
 .metric-card {
     background: #fafafc;
     border: 1px solid #e8e8e8;
@@ -268,9 +268,6 @@ html, body, .stApp {
     margin-top: 4px;
 }
 
-/* ================================
-   شاشات صغيرة
-   ================================ */
 @media (max-width: 768px) {
     .hdr h1 {
         font-size: 24px;
@@ -313,6 +310,42 @@ html, body, .stApp {
         font-size: 18px;
     }
 }
+</style>
+""", unsafe_allow_html=True)
+
+# ==================== التهيئة ====================
+_saved = load_settings()
+
+def _init():
+    defs = {
+        "memory": load_json(MEMORY_FILE, []),
+        "law_db": load_json(LAW_FILE, []),
+        "docs": [],
+        "pending_q": "",
+        "current_sid": None,
+        "current_msgs": [],
+        "ai_preset": _saved.get("ai_preset", "Gemini 2.0 Flash — مجاني"),
+        "ai_key": _saved.get("ai_key", ""),
+        "ai_endpoint": _saved.get("ai_endpoint", ""),
+        "ai_model": _saved.get("ai_model", ""),
+        "ai_format": _saved.get("ai_format", "gemini"),
+        "case_type": "قضية عمالية",
+        "bg_b64": "",
+        "uploaded_texts": [],
+        "analysis_result": None,
+        "current_messages": [],
+    }
+    for k, v in defs.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
+    if not st.session_state.bg_b64 and os.path.exists(BG_FILE):
+        with open(BG_FILE, "r") as f:
+            st.session_state.bg_b64 = f.read().strip()
+_init()
+
+if st.session_state.bg_b64:
+    st.markdown(f"""
+    <style>
     .stApp {{
         background-image: url("data:image/png;base64,{st.session_state.bg_b64}");
         background-size: cover;
@@ -330,6 +363,7 @@ html, body, .stApp {
     </style>
     """, unsafe_allow_html=True)
 
+# ==================== الهيدر ====================
 st.markdown('<div class="hdr"><h1>Führer</h1></div>', unsafe_allow_html=True)
 
 # ==================== دوال مساعدة ====================
@@ -372,6 +406,7 @@ def call_ai(prompt: str) -> str:
         client = AIClient(endpoint, model, fmt, key)
         return client.generate(system, msgs + [{"role": "user", "content": prompt}])
     except Exception as e:
+        logger.exception("AI call failed")
         return f"❌ خطأ: {str(e)[:200]}"
 
 def mem_add(text, tags=None, cat="عام"):
@@ -386,8 +421,8 @@ def mem_del(mid):
     st.session_state.memory = [m for m in st.session_state.memory if m["id"] != mid]
     save_json(MEMORY_FILE, st.session_state.memory)
 
-# ==================== دوال التحليل المتكاملة ====================
 def extract_entities(text: str) -> Dict:
+    """استخراج الكيانات الأساسية من النص"""
     return {
         "employee_name": re.search(r'(?:الموظف|السيد)\s*([\u0600-\u06ff\s]{2,30})', text),
         "employer_name": re.search(r'(?:صاحب العمل|الشركة)\s*([\u0600-\u06ff\s]{2,30})', text),
@@ -399,6 +434,7 @@ def extract_entities(text: str) -> Dict:
     }
 
 def generate_analysis(text: str) -> Dict:
+    """توليد تحليل سريع للنص باستخدام القواعد والمعلومات المستخرجة"""
     extracted = extract_entities(text)
     return {
         "extracted": extracted,
@@ -412,14 +448,14 @@ def generate_analysis(text: str) -> Dict:
         "strength_score": 70 if ("فصل" in text and "تحقيق" not in text) else 50,
     }
 
-# ==================== التبويبات (مع أوصاف كاملة) ====================
+# ==================== التبويبات (7 تبويبات) ====================
 tabs = st.tabs([
-    "📊 لوحة التحكم", 
-    "📄 الملفات", 
-    "📋 التدقيق", 
-    "⚖️ الدعوى", 
-    "📚 القانون", 
-    "🧠 الذاكرة", 
+    "📊 لوحة التحكم",
+    "📄 الملفات",
+    "📋 التدقيق",
+    "⚖️ الدعوى",
+    "📚 القانون",
+    "🧠 الذاكرة",
     "⚙️ الإعدادات"
 ])
 t_dashboard, t_files, t_audit, t_docs, t_law, t_mem, t_settings = tabs
@@ -428,7 +464,7 @@ t_dashboard, t_files, t_audit, t_docs, t_law, t_mem, t_settings = tabs
 with t_dashboard:
     st.subheader("لوحة التحكم")
     st.caption("ملخص شامل للقضية، نقاط القوة والضعف، والتوصيات الفورية.")
-    
+
     if st.session_state.analysis_result is None:
         st.info("📌 لا يوجد تحليل حالي. قم برفع الملفات في تبويب 'الملفات' أو الصق النص في تبويب 'التدقيق' لبدء التحليل.")
         quick_text = st.text_area("✏️ الصق النص للتحليل السريع", height=150, placeholder="مثال: تم فصلي من العمل بدون تحقيق مسبق...")
@@ -441,7 +477,7 @@ with t_dashboard:
     else:
         analysis = st.session_state.analysis_result
         extracted = analysis.get("extracted", {})
-        
+
         # الملخص التنفيذي
         st.markdown("### الملخص التنفيذي")
         col1, col2 = st.columns(2)
@@ -477,7 +513,7 @@ with t_dashboard:
                 st.success("فصل دون تحقيق (المادة 80 - بطلان)")
             if not analysis.get("has_warning") and analysis.get("has_termination_letter"):
                 st.success("فصل دون إنذار سابق (المادة 75)")
-            if not any([analysis.get("has_acknowledgment"), analysis.get("is_arbitrary"), 
+            if not any([analysis.get("has_acknowledgment"), analysis.get("is_arbitrary"),
                        (not analysis.get("has_investigation") and analysis.get("has_termination_letter"))]):
                 st.info("لم يتم اكتشاف نقاط قوة واضحة")
         with col2:
@@ -488,7 +524,7 @@ with t_dashboard:
                 st.warning("لا يوجد خطاب فصل رسمي (ضعف إثباتي)")
             if analysis.get("risk_level") == "مرتفعة":
                 st.warning("خطر التقادم أو ضعف الأدلة")
-            if not any([analysis.get("has_threat"), not analysis.get("has_termination_letter"), 
+            if not any([analysis.get("has_threat"), not analysis.get("has_termination_letter"),
                        analysis.get("risk_level") == "مرتفعة"]):
                 st.success("لا توجد نقاط ضعف واضحة")
 
@@ -506,15 +542,58 @@ with t_dashboard:
             recs.append("🛡️ التهديدات تُعتبر تعسفاً - وثقها كدليل")
         if not recs:
             recs.append("✅ الإجراءات تبدو سليمة. يُنصح بالاستمرار في جمع الأدلة والتواصل مع مكتب العمل.")
-        
         for rec in recs:
             st.info(rec)
+
+        # خطة التقاضي المقترحة (إن كانت المحركات متوفرة)
+        if StrategicAdvisor and st.session_state.analysis_result:
+            st.markdown("---")
+            st.markdown("### خطة التقاضي المقترحة")
+            advisor = StrategicAdvisor(st.session_state.analysis_result)
+            roadmap = advisor.generate_roadmap()
+            for event, details in roadmap["events"].items():
+                col1, col2, col3 = st.columns([2, 3, 1])
+                with col1:
+                    st.markdown(f"**{details['date']}**")
+                with col2:
+                    st.markdown(details['description'])
+                with col3:
+                    if details['status'] == 'critical':
+                        st.markdown("🔴 عاجل")
+                    elif details['status'] == 'pending':
+                        st.markdown("⏳ قادم")
+                    else:
+                        st.markdown("✅ منجز")
+
+            # حاسبة الجدوى المالية
+            st.markdown("---")
+            st.markdown("### حاسبة الجدوى المالية")
+            feasibility = advisor.calculate_feasibility()
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("المبلغ المطلوب", f"{feasibility['claim_amount']:,.2f} ريال")
+                st.metric("رسوم المحكمة المتوقعة", f"{feasibility['legal_fees']:,.2f} ريال")
+            with col2:
+                st.metric("أتعاب المحاماة (تقديري)", f"{feasibility['lawyer_fees']:,.2f} ريال")
+                st.metric("صافي العائد المتوقع", f"{feasibility['net_gain']:,.2f} ريال")
+            st.info(f"**الجدوى:** {feasibility['feasibility']}")
+            st.success(f"**التوصية:** {feasibility['recommendation']}")
+
+            # سيناريوهات التفاوض
+            st.markdown("---")
+            st.markdown("### سيناريوهات التفاوض")
+            scenarios = advisor.generate_negotiation_scenarios()
+            for title, data in scenarios.items():
+                with st.expander(title):
+                    st.markdown(f"**المبلغ المقترح:** {data['amount']:,.2f} ريال")
+                    st.markdown(f"**الرسالة:** {data['message']}")
+                    st.markdown(f"**الرد الجاهز:** {data['response']}")
 
 # ------ 2. الملفات ------
 with t_files:
     st.subheader("📄 رفع وتحليل المستندات")
     st.caption("ارفع خطابات الفصل، قرارات الإدارة، عقود العمل، أو أي مستندات ذات صلة (PDF, DOCX, TXT, صور).")
-    
+
     uploaded = st.file_uploader("اختر الملفات", type=None, accept_multiple_files=True, label_visibility="collapsed")
     if uploaded:
         st.info(f"✅ تم رفع {len(uploaded)} ملف")
@@ -535,7 +614,7 @@ with t_files:
                         st.markdown(f"**مبالغ:** {', '.join(ents['amounts'][:5])}")
                 else:
                     st.warning("⚠️ لم يُستخرج نص من هذا الملف (قد يكون ممسوحاً ضوئياً)")
-        
+
         if texts:
             st.session_state.docs = texts
             col1, col2 = st.columns(2)
@@ -568,7 +647,7 @@ with t_files:
 with t_audit:
     st.subheader("📋 التدقيق الإداري والقانوني")
     st.caption("الصق نص الخطاب، القرار، أو المراسلة للكشف عن المخالفات النظامية والأخطاء الإجرائية.")
-    
+
     text_input = st.text_area("✏️ الصق النص هنا", height=200, placeholder="مثال: تم فصل الموظف محمد بدون تحقيق...")
     use_uploaded = False
     if st.session_state.get("uploaded_texts"):
@@ -585,14 +664,30 @@ with t_audit:
 
     if st.button("📋 تدقيق", use_container_width=True) and text_to_analyze.strip():
         with st.spinner("جاري التحليل..."):
-            from procedural_analyzer import ProceduralAnalyzer
-            from discrepancy_analyzer import DiscrepancyAnalyzer
-            proc_analyzer = ProceduralAnalyzer()
-            proc_result = proc_analyzer.analyze(text_to_analyze)
+            # استخدام المحلل الإجرائي إن كان موجوداً
+            if ProceduralAnalyzer:
+                proc_analyzer = ProceduralAnalyzer()
+                proc_result = proc_analyzer.analyze(text_to_analyze)
+            else:
+                proc_result = {
+                    "has_investigation": "تحقيق" in text_to_analyze,
+                    "has_notice": "إشعار" in text_to_analyze,
+                    "has_termination_letter": "فصل" in text_to_analyze,
+                    "has_warning": "إنذار" in text_to_analyze,
+                    "is_arbitrary": ("فصل" in text_to_analyze) and ("تحقيق" not in text_to_analyze),
+                    "notice_period_days": 0,
+                    "recommendations": ["يُنصح بالتحقق من الإجراءات النظامية"],
+                    "legal_references": ["المادة 80، 81 من نظام العمل"]
+                }
 
-            disc_analyzer = DiscrepancyAnalyzer()
-            disc_result = disc_analyzer.analyze_documents([{"text": text_to_analyze, "source": "النص"}])
+            # استخدام محلل التناقضات إن كان موجوداً
+            if DiscrepancyAnalyzer:
+                disc_analyzer = DiscrepancyAnalyzer()
+                disc_result = disc_analyzer.analyze_documents([{"text": text_to_analyze, "source": "النص"}])
+            else:
+                disc_result = {"discrepancies": []}
 
+            # تطبيق القواعد
             ctx = {
                 "has_investigation": proc_result.get("has_investigation", False),
                 "has_notice": proc_result.get("has_notice", False),
@@ -645,7 +740,7 @@ with t_audit:
 with t_docs:
     st.subheader("⚖️ توليد المستندات القانونية")
     st.caption("أنشئ إنذاراً رسمياً، صحيفة دعوى، أو مذكرة قانونية جاهزة للتقديم.")
-    
+
     with st.form("doc_form"):
         col1, col2 = st.columns(2)
         with col1:
@@ -656,10 +751,10 @@ with t_docs:
             defendant = st.text_input("🏢 اسم المدعى عليه (صاحب العمل)", value="", placeholder="أدخل اسم الشركة")
             defendant_id = st.text_input("🆔 رقم المنشأة", value="", placeholder="أدخل رقم المنشأة")
             claim_amount = st.number_input("💰 المبلغ المطلوب (ريال)", min_value=0.0, value=0.0, step=1000.0)
-        
+
         facts = st.text_area("📝 الوقائع (سطر لكل واقعة)", height=100, placeholder="مثال:\nبدأت العمل في 1/1/2020\nتم فصلي في 1/1/2024\nلم يتم صرف المكافأة")
         laws = st.text_input("📜 المواد النظامية المستندة (مفصولة بفاصلة)", value="المادة 84, المادة 77", placeholder="المادة 84, المادة 77")
-        
+
         if st.form_submit_button("⚖️ توليد المستند", use_container_width=True):
             from legal_document_generator import LegalDocumentGenerator
             case_data = {
@@ -689,7 +784,7 @@ with t_docs:
 with t_law:
     st.subheader("📚 قاعدة الأنظمة السعودية")
     st.caption(f"إجمالي المواد القانونية في القاعدة: {len(st.session_state.law_db):,} مادة")
-    
+
     search_term = st.text_input("🔍 بحث في المواد", placeholder="اكتب كلمة مفتاحية (مثل: مكافأة، فصل، تعويض)")
     if search_term:
         results = [i for i in st.session_state.law_db if search_term.lower() in i.get("text", "").lower() or search_term.lower() in i.get("law_name", "").lower()]
@@ -710,7 +805,7 @@ with t_law:
 with t_mem:
     st.subheader("🧠 الذاكرة الدائمة")
     st.caption("تخزين الملاحظات والحجج والأفكار المتعلقة بالقضية.")
-    
+
     with st.expander("✏️ إضافة ملاحظة جديدة"):
         mt = st.text_area("النص", height=100, placeholder="مثال: لاحظت أن صاحب العمل لم يرسل إنذاراً قبل الفصل.")
         mcat = st.selectbox("الفئة", ["قضية", "موكل", "حكم", "ملاحظة", "استراتيجية", "قانون", "عام"])
@@ -720,7 +815,7 @@ with t_mem:
             mem_add(mt, tags, mcat)
             st.success("✅ تم الحفظ")
             st.rerun()
-    
+
     st.markdown("---")
     st.markdown("**الملاحظات المحفوظة**")
     for m in reversed(st.session_state.memory[-20:]):
@@ -736,7 +831,7 @@ with t_mem:
 with t_settings:
     st.subheader("⚙️ الإعدادات والجلسات")
     st.caption("إدارة النماذج، مفاتيح API، الجلسات، والخلفية.")
-    
+
     st.markdown("**🤖 النموذج**")
     preset_names = ["Gemini 2.0 Flash — مجاني", "Gemini 1.5 Pro — مجاني",
                     "Groq LLaMA 3.3 — مجاني وسريع", "Claude Sonnet", "OpenAI GPT-4o",
