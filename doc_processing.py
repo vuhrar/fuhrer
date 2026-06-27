@@ -7,9 +7,7 @@
 from typing import List, Dict, Any
 import io, re
 from datetime import datetime
-from .utils import _bytes, _norm
-
-# دوال استخراج النصوص الأساسية (تبقى كما هي أو معدلة قليلاً)
+from utils import _bytes, _norm
 
 # ==========================
 # دوال استخراج الكيانات العمالية
@@ -138,12 +136,37 @@ def extract_laws_from_text(text: str, source: str = "") -> List[Dict]:
             })
     return records
 
-# دوال extract_laws_from_pdf, extract_laws_from_docx تبقى كما هي مع استدعاء الدالة الجديدة
-# وتبقى class DocIntel كما هي مع إضافة دالة extract_entities
+def extract_laws_from_pdf(raw: bytes, source: str = "") -> List[Dict]:
+    text = ""
+    try:
+        import pdfplumber
+        with pdfplumber.open(io.BytesIO(raw)) as pdf:
+            for pg in pdf.pages:
+                t = pg.extract_text() or ""
+                if t.strip():
+                    text += t + "\n"
+    except Exception:
+        try:
+            import PyPDF2
+            for pg in PyPDF2.PdfReader(io.BytesIO(raw)).pages:
+                t = pg.extract_text() or ""
+                if t.strip():
+                    text += t + "\n"
+        except Exception:
+            pass
+    return extract_laws_from_text(text, source) if text else []
+
+def extract_laws_from_docx(raw: bytes, source: str = "") -> List[Dict]:
+    try:
+        from docx import Document
+        doc = Document(io.BytesIO(raw))
+        text = "\n".join(p.text for p in doc.paragraphs if p.text)
+        return extract_laws_from_text(text, source)
+    except Exception:
+        return []
 
 class DocIntel:
     def extract(self, f) -> str:
-        # نفس الكود القديم
         ext = (getattr(f, "name", "") or "").rsplit(".", 1)[-1].lower()
         raw = _bytes(f)
         try:
@@ -192,14 +215,12 @@ class DocIntel:
             return ""
 
     def entities(self, t: str) -> dict:
-        # نضيف الكيانات العمالية للمخرجات
         base_entities = {
             "parties": list(set(re.findall(r"(?:المدعي|المدعى عليه|الشركة|المؤسسة|الموظف|الهيئة)", t or ""))),
             "amounts": re.findall(r"[\d,]+\s*(?:ريال|درهم|دولار)", t or ""),
             "articles": re.findall(r"المادة\s*[\u0600-\u06FF\d]+", t or ""),
             "dates": re.findall(r"\d{1,2}/\d{1,2}/\d{2,4}", t or ""),
         }
-        # إضافة الكيانات العمالية
         labor_entities = extract_labor_entities(t)
         base_entities.update(labor_entities)
         return base_entities
