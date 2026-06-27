@@ -18,8 +18,7 @@ logger = logging.getLogger("fuehrer")
 
 st.set_page_config(page_title="Führer", page_icon="⚖️", layout="wide", initial_sidebar_state="collapsed")
 
-# ==================== CSS ====================
-st.markdown("""
+# ====================
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap');
 
 * {
@@ -314,39 +313,6 @@ html, body, .stApp {
         font-size: 18px;
     }
 }
-""", unsafe_allow_html=True)
-
-# ==================== التهيئة ====================
-_saved = load_settings()
-def _init():
-    defs = {
-        "memory": load_json(MEMORY_FILE, []),
-        "law_db": load_json(LAW_FILE, []),
-        "docs": [],
-        "pending_q": "",
-        "current_sid": None,
-        "current_msgs": [],
-        "ai_preset": _saved.get("ai_preset", "Gemini 2.0 Flash — مجاني"),
-        "ai_key": _saved.get("ai_key", ""),
-        "ai_endpoint": _saved.get("ai_endpoint", ""),
-        "ai_model": _saved.get("ai_model", ""),
-        "ai_format": _saved.get("ai_format", "gemini"),
-        "case_type": "قضية عمالية",
-        "bg_b64": "",
-        "uploaded_texts": [],
-        "analysis_result": None,
-    }
-    for k, v in defs.items():
-        if k not in st.session_state:
-            st.session_state[k] = v
-    if not st.session_state.bg_b64 and os.path.exists(BG_FILE):
-        with open(BG_FILE, "r") as f:
-            st.session_state.bg_b64 = f.read().strip()
-_init()
-
-if st.session_state.bg_b64:
-    st.markdown(f"""
-    <style>
     .stApp {{
         background-image: url("data:image/png;base64,{st.session_state.bg_b64}");
         background-size: cover;
