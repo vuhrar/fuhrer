@@ -1,5 +1,4 @@
 #Führer🦾
-import streamlit as st
 import re, os, json, logging, hashlib, base64
 from datetime import datetime
 
@@ -23,7 +22,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ========== CSS النظيف بدون أي أخطاء ==========
+# ========== CSS النهائي ==========
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap');
@@ -285,6 +284,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# ==================== دوال مساعدة ====================
 def get_active_preset():
     preset_name = st.session_state.ai_preset
     PRESETS = {
@@ -365,86 +365,57 @@ def generate_analysis(text: str) -> dict:
     }
 
 # ==================== التبويبات ====================
-tabs = st.tabs(["📊 لوحة التحكم", "📄 الملفات", "📋 التدقيق", "⚖️ الدعوى", "📚 القانون", "🧠 الذاكرة", "⚙️ الإعدادات"])
-t_dashboard, t_files, t_audit, t_docs, t_law, t_mem, t_settings = tabs
+tabs = st.tabs(["💬 المستشار", "📄 الملفات", "📋 التدقيق", "⚖️ الدعوى", "📚 القانون", "🧠 الذاكرة", "⚙️ الإعدادات"])
+t_ai, t_files, t_audit, t_docs, t_law, t_mem, t_settings = tabs
 
-# ------ لوحة التحكم ------
-with t_dashboard:
-    st.subheader("لوحة التحكم")
-    if st.session_state.analysis_result is None:
-        st.info("📌 لا يوجد تحليل حالي. قم برفع الملفات في تبويب 'الملفات' أو الصق النص في تبويب 'التدقيق'.")
-        quick_text = st.text_area("✏️ الصق النص للتحليل السريع", height=150, placeholder="مثال: تم فصلي من العمل بدون تحقيق مسبق...")
-        if st.button("🚀 تحليل سريع") and quick_text.strip():
-            with st.spinner("جاري التحليل..."):
-                analysis = generate_analysis(quick_text)
-                st.session_state.analysis_result = analysis
-                st.session_state.uploaded_texts = [quick_text]
-                st.rerun()
+# ------ 1. المستشار (الدردشة) ------
+with t_ai:
+    st.subheader("💬 المستشار العمالي")
+    st.caption("اطرح سؤالك القانوني واحصل على إجابة مدعومة بالنظام.")
+
+    if not st.session_state.current_sid:
+        st.info("📌 ابدأ جلسة جديدة من تبويب الإعدادات.")
     else:
-        analysis = st.session_state.analysis_result
-        extracted = analysis.get("extracted", {})
-        st.markdown("### الملخص التنفيذي")
-        col1, col2 = st.columns(2)
+        sess = load_session(st.session_state.current_sid)
+        new_name = st.text_input("📝 اسم الجلسة", value=sess.get("name", "جلسة"), key="sess_name_inp")
+        if new_name != sess.get("name", ""):
+            sess["name"] = new_name
+            sess["messages"] = st.session_state.current_msgs
+            save_session(st.session_state.current_sid, sess)
+
+        for msg in st.session_state.current_msgs:
+            cls = "chat-user" if msg["role"] == "user" else "chat-ai"
+            ico = "👤" if msg["role"] == "user" else "⚖️"
+            content = msg["content"].replace("\n", "<br>")
+            ts = msg.get("ts", "")
+            st.markdown(f'<div class="{cls}">{ico} {content}<br><small style="color:#999;font-size:10px">⏱ {ts}</small></div>', unsafe_allow_html=True)
+
+        user_inp = st.text_area("✏️ اسأل هنا", value=st.session_state.pending_q, height=100, placeholder="مثال: ما هي مكافأة نهاية الخدمة؟")
+        col1, col2 = st.columns([3, 1])
         with col1:
-            st.markdown(f"""
-            <div style="background:#f8f9fa;padding:15px;border-radius:8px;border-right:4px solid rgb(212,168,32);">
-            <strong>👤 الموظف:</strong> {extracted.get('employee_name', 'غير محدد') or 'غير محدد'}<br>
-            <strong>🏢 صاحب العمل:</strong> {extracted.get('employer_name', 'غير محدد') or 'غير محدد'}<br>
-            <strong>💰 الراتب الأساسي:</strong> {extracted.get('basic_salary', 'غير محدد')}<br>
-            <strong>📅 مدة الخدمة:</strong> {extracted.get('service_years', 'غير محدد')} سنوات
-            </div>
-            """, unsafe_allow_html=True)
+            if st.button("📤 إرسال", use_container_width=True) and user_inp.strip():
+                st.session_state.pending_q = ""
+                ts = datetime.now().strftime("%H:%M")
+                st.session_state.current_msgs.append({"role": "user", "content": user_inp, "ts": ts})
+                with st.spinner("⚖️ يحلل..."):
+                    resp = call_ai(user_inp)
+                st.session_state.current_msgs.append({"role": "assistant", "content": resp, "ts": ts})
+                sess["messages"] = st.session_state.current_msgs
+                save_session(st.session_state.current_sid, sess)
+                if len(resp) > 80 and "❌" not in resp:
+                    mem_add(f"س: {user_inp[:80]} | ج: {resp[:150]}...", tags=["محادثة", st.session_state.case_type], cat="محادثة")
+                st.rerun()
         with col2:
-            st.markdown(f"""
-            <div style="background:#f8f9fa;padding:15px;border-radius:8px;border-right:4px solid rgb(212,168,32);">
-            <strong>⚖️ قوة الموقف:</strong> {analysis.get('strength_score', 50)}%<br>
-            <strong>⚠️ المخاطر:</strong> {analysis.get('risk_level', 'متوسطة')}<br>
-            <strong>📜 المواد المستشهد بها:</strong> {', '.join(extracted.get('mentioned_articles', ['لا يوجد']))[:50]}
-            </div>
-            """, unsafe_allow_html=True)
+            if st.button("🗑️ مسح", use_container_width=True):
+                st.session_state.current_msgs = []
+                sess["messages"] = []
+                save_session(st.session_state.current_sid, sess)
+                st.rerun()
 
-        st.markdown("---")
-        st.markdown("### مصفوفة الحجج")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("**✅ نقاط القوة**")
-            if analysis.get("has_acknowledgment"):
-                st.success("يوجد إقرار من الخصم")
-            if analysis.get("is_arbitrary"):
-                st.success("فصل تعسفي واضح (المادة 81)")
-            if not analysis.get("has_investigation") and analysis.get("has_termination_letter"):
-                st.success("فصل دون تحقيق (المادة 80 - بطلان)")
-            if not any([analysis.get("has_acknowledgment"), analysis.get("is_arbitrary"), (not analysis.get("has_investigation") and analysis.get("has_termination_letter"))]):
-                st.info("لم يتم اكتشاف نقاط قوة واضحة")
-        with col2:
-            st.markdown("**❌ نقاط الضعف**")
-            if analysis.get("has_threat"):
-                st.warning("لغة تهديدية من الخصم")
-            if not analysis.get("has_termination_letter"):
-                st.warning("لا يوجد خطاب فصل رسمي")
-            if analysis.get("risk_level") == "مرتفعة":
-                st.warning("خطر التقادم أو ضعف الأدلة")
-            if not any([analysis.get("has_threat"), not analysis.get("has_termination_letter"), analysis.get("risk_level") == "مرتفعة"]):
-                st.success("لا توجد نقاط ضعف واضحة")
-
-        st.markdown("---")
-        st.markdown("### 💡 التوصيات")
-        recs = []
-        if analysis.get("is_arbitrary"):
-            recs.append("⚡ فصل تعسفي - يُنصح برفع دعوى فورية مع طلب تعويض")
-        if not analysis.get("has_investigation") and analysis.get("has_termination_letter"):
-            recs.append("📋 الفصل دون تحقيق باطل - قدم اعتراض رسمي لدى مكتب العمل خلال 15 يوماً")
-        if analysis.get("has_threat"):
-            recs.append("🛡️ التهديدات تُعتبر تعسفاً - وثقها كدليل")
-        if not recs:
-            recs.append("✅ الإجراءات تبدو سليمة. يُنصح بالاستمرار في جمع الأدلة.")
-        for rec in recs:
-            st.info(rec)
-
-# ------ الملفات ------
+# ------ 2. الملفات ------
 with t_files:
     st.subheader("📄 رفع وتحليل المستندات")
-    uploaded = st.file_uploader("اختر الملفات", type=None, accept_multiple_files=True, label_visibility="collapsed")
+    uploaded = st.file_uploader("اختر الملفات (PDF, DOCX, TXT, JSON)", type=["pdf", "docx", "txt", "json"], accept_multiple_files=True, label_visibility="collapsed")
     if uploaded:
         st.info(f"✅ تم رفع {len(uploaded)} ملف")
         di = DocIntel()
@@ -466,39 +437,44 @@ with t_files:
                     st.warning("⚠️ لم يُستخرج نص من هذا الملف")
         if texts:
             st.session_state.docs = texts
-            if st.button("🔍 تحليل شامل", use_container_width=True):
-                with st.spinner("جاري التحليل..."):
-                    combined = "\n\n".join(texts)
-                    analysis = generate_analysis(combined)
-                    st.session_state.analysis_result = analysis
-                    st.session_state.uploaded_texts = texts
-                    st.success("✅ تم التحليل، انتقل إلى 'لوحة التحكم'")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🔍 تحليل شامل", use_container_width=True):
+                    with st.spinner("جاري التحليل..."):
+                        combined = "\n\n".join(texts)
+                        analysis = generate_analysis(combined)
+                        st.session_state.analysis_result = analysis
+                        st.session_state.uploaded_texts = texts
+                        st.success("✅ تم التحليل، انتقل إلى 'المستشار' لطرح الأسئلة")
+            with col2:
+                if st.button("📚 استخراج القوانين", use_container_width=True):
+                    total = 0
+                    for f in uploaded:
+                        raw = _bytes(f)
+                        ext = (f.name or "").rsplit(".", 1)[-1].lower()
+                        if ext == "pdf":
+                            records = extract_laws_from_pdf(raw, f.name)
+                        elif ext == "docx":
+                            records = extract_laws_from_docx(raw, f.name)
+                        else:
+                            records = extract_laws_from_text(raw.decode("utf-8", errors="ignore"), f.name)
+                        st.session_state.law_db.extend(records)
+                        total += len(records)
+                    save_json(LAW_FILE, st.session_state.law_db)
+                    st.success(f"✅ تم استخراج {total} مادة قانونية وإضافتها للقاعدة")
 
-# ------ التدقيق ------
+# ------ 3. التدقيق ------
 with t_audit:
     st.subheader("📋 التدقيق الإداري والقانوني")
     text_input = st.text_area("✏️ الصق النص هنا", height=200, placeholder="مثال: تم فصل الموظف محمد بدون تحقيق...")
-    use_uploaded = False
-    if st.session_state.get("uploaded_texts"):
-        if st.checkbox("استخدام النص المستخرج من الملفات المرفوعة"):
-            use_uploaded = True
-            combined = "\n\n".join(st.session_state.uploaded_texts)
-            st.text_area("النص المستخرج", combined, height=150)
-
-    text_to_analyze = ""
-    if use_uploaded and st.session_state.get("uploaded_texts"):
-        text_to_analyze = "\n\n".join(st.session_state.uploaded_texts)
-    else:
-        text_to_analyze = text_input
-
-    if st.button("📋 تدقيق", use_container_width=True) and text_to_analyze.strip():
+    if st.button("📋 تدقيق", use_container_width=True) and text_input.strip():
         with st.spinner("جاري التحليل..."):
             from procedural_analyzer import ProceduralAnalyzer
             from discrepancy_analyzer import DiscrepancyAnalyzer
             proc_analyzer = ProceduralAnalyzer()
-            proc_result = proc_analyzer.analyze(text_to_analyze)
+            proc_result = proc_analyzer.analyze(text_input)
             disc_analyzer = DiscrepancyAnalyzer()
-            disc_result = disc_analyzer.analyze_documents([{"text": text_to_analyze, "source": "النص"}])
+            disc_result = disc_analyzer.analyze_documents([{"text": text_input, "source": "النص"}])
             ctx = {
                 "has_investigation": proc_result.get("has_investigation", False),
                 "has_notice": proc_result.get("has_notice", False),
@@ -542,22 +518,22 @@ with t_audit:
                 for ref in proc_result["legal_references"]:
                     st.markdown(f"- {ref}")
 
-# ------ توليد الدعوى ------
+# ------ 4. توليد الدعوى ------
 with t_docs:
     st.subheader("⚖️ توليد المستندات القانونية")
     with st.form("doc_form"):
         col1, col2 = st.columns(2)
         with col1:
-            plaintiff = st.text_input("👤 اسم المدعي", value="")
-            plaintiff_id = st.text_input("🆔 رقم الهوية", value="")
+            plaintiff = st.text_input("👤 اسم المدعي")
+            plaintiff_id = st.text_input("🆔 رقم الهوية")
             work_location = st.text_input("📍 مكان العمل", value="الرياض")
         with col2:
-            defendant = st.text_input("🏢 اسم المدعى عليه", value="")
-            defendant_id = st.text_input("🆔 رقم المنشأة", value="")
+            defendant = st.text_input("🏢 اسم المدعى عليه")
+            defendant_id = st.text_input("🆔 رقم المنشأة")
             claim_amount = st.number_input("💰 المبلغ المطلوب", min_value=0.0, value=0.0, step=1000.0)
         facts = st.text_area("📝 الوقائع", height=100)
         laws = st.text_input("📜 المواد", value="المادة 84, المادة 77")
-        if st.form_submit_button("⚖️ توليد المستند"):
+        if st.form_submit_button("⚖️ توليد"):
             from legal_document_generator import LegalDocumentGenerator
             case_data = {
                 "plaintiff": plaintiff or "المدعي",
@@ -582,10 +558,14 @@ with t_docs:
                     st.text_area(f"نص {title}", content, height=200, key=f"doc_{title}")
                     st.download_button(f"⬇️ تحميل {title}", data=content.encode("utf-8"), file_name=f"{title}.txt", mime="text/plain")
 
-# ------ القانون ------
+# ------ 5. القانون ------
 with t_law:
     st.subheader("📚 قاعدة الأنظمة السعودية")
     st.caption(f"إجمالي المواد: {len(st.session_state.law_db):,}")
+    if st.session_state.law_db:
+        st.success(f"✅ القاعدة تحتوي على {len(st.session_state.law_db)} مادة قانونية")
+    else:
+        st.warning("⚠️ القاعدة فارغة. ارفع ملفات قانونية واستخرج القوانين من تبويب 'الملفات'.")
     search_term = st.text_input("🔍 بحث في المواد")
     if search_term:
         results = [i for i in st.session_state.law_db if search_term.lower() in i.get("text", "").lower() or search_term.lower() in i.get("law_name", "").lower()]
@@ -600,21 +580,21 @@ with t_law:
         with col2:
             st.metric("المواد", len(st.session_state.law_db))
 
-# ------ الذاكرة ------
+# ------ 6. الذاكرة ------
 with t_mem:
     st.subheader("🧠 الذاكرة الدائمة")
     with st.expander("✏️ إضافة ملاحظة"):
         mt = st.text_area("النص", height=100)
         mcat = st.selectbox("الفئة", ["قضية", "موكل", "حكم", "ملاحظة", "استراتيجية", "قانون", "عام"])
         mtags = st.text_input("وسوم")
-        if st.button("💾 حفظ الملاحظة") and mt.strip():
+        if st.button("💾 حفظ") and mt.strip():
             tags = [x.strip() for x in mtags.split(",") if x.strip()]
             mem_add(mt, tags, mcat)
             st.rerun()
     for m in reversed(st.session_state.memory[-15:]):
         st.markdown(f'<div class="result-card"><small>{m.get("ts", "")} · {m.get("category", "")}</small><br>{m["text"][:200]}</div>', unsafe_allow_html=True)
 
-# ------ الإعدادات ------
+# ------ 7. الإعدادات ------
 with t_settings:
     st.subheader("⚙️ الإعدادات والجلسات")
     st.markdown("**🤖 النموذج**")
