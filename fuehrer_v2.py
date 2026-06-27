@@ -1,4 +1,4 @@
-#Führer# 🦾
+# Führer🦾
 import streamlit as st
 import re, os, json, logging, hashlib, base64
 from datetime import datetime
@@ -365,6 +365,32 @@ def generate_analysis(text: str) -> dict:
         "strength_score": 70 if ("فصل" in text and "تحقيق" not in text) else 50,
     }
 
+def calculate_eosb(basic_salary, service_years, absence_days=0):
+    years_5 = min(service_years, 5)
+    years_after = max(0, service_years - 5)
+    total = (basic_salary / 2) * years_5 + basic_salary * years_after
+    deduction = (basic_salary / 30) * max(0, absence_days - 15)
+    return round(total - deduction, 2)
+
+def calculate_compensation(total_salary, service_years):
+    months = min(12, max(3, int(service_years * 0.8)))
+    return round(total_salary * months, 2)
+
+def calculate_total(bs, ts, sy, absence=0, delay=0, is_arbitrary=False):
+    eosb = calculate_eosb(bs, sy, absence)
+    comp = calculate_compensation(ts, sy) if is_arbitrary else 0
+    delay_comp = ts * 0.05 * delay
+    total = eosb + comp + delay_comp
+    gosi = ts * 0.09
+    return {
+        "eosb": eosb,
+        "compensation": comp,
+        "delay_comp": delay_comp,
+        "gosi": gosi,
+        "total_gross": round(total, 2),
+        "total_net": round(total - gosi, 2)
+    }
+
 # ==================== التبويبات ====================
 tabs = st.tabs(["💬 المستشار", "📄 الملفات", "📋 التدقيق", "⚖️ الدعوى", "📚 القانون", "🧠 الذاكرة", "⚙️ الإعدادات"])
 t_ai, t_files, t_audit, t_docs, t_law, t_mem, t_settings = tabs
@@ -416,7 +442,9 @@ with t_ai:
 # ------ 2. الملفات ------
 with t_files:
     st.subheader("📄 رفع وتحليل المستندات")
-    uploaded = st.file_uploader("اختر الملفات (PDF, DOCX, TXT, JSON)", type=["pdf", "docx", "txt", "json"], accept_multiple_files=True, label_visibility="collapsed")
+    st.caption("ارفع ملفات PDF، DOCX، TXT، JSON لاستخراج النصوص والقوانين.")
+
+    uploaded = st.file_uploader("اختر الملفات", type=["pdf", "docx", "txt", "json"], accept_multiple_files=True, label_visibility="collapsed")
     if uploaded:
         st.info(f"✅ تم رفع {len(uploaded)} ملف")
         di = DocIntel()
@@ -434,11 +462,15 @@ with t_files:
                         st.markdown(f"**تواريخ:** {', '.join(ents['dates'][:5])}")
                     if ents.get("amounts"):
                         st.markdown(f"**مبالغ:** {', '.join(ents['amounts'][:5])}")
+                    if ents.get("basic_salary"):
+                        st.metric("الراتب الأساسي", f"{ents['basic_salary']} ريال")
+                    if ents.get("service_years"):
+                        st.metric("مدة الخدمة", f"{ents['service_years']} سنوات")
                 else:
                     st.warning("⚠️ لم يُستخرج نص من هذا الملف")
         if texts:
             st.session_state.docs = texts
-            col1, col2 = st.columns(2)
+            col1, col2, col3 = st.columns(3)
             with col1:
                 if st.button("🔍 تحليل شامل", use_container_width=True):
                     with st.spinner("جاري التحليل..."):
@@ -463,6 +495,16 @@ with t_files:
                         total += len(records)
                     save_json(LAW_FILE, st.session_state.law_db)
                     st.success(f"✅ تم استخراج {total} مادة قانونية وإضافتها للقاعدة")
+            with col3:
+                if st.button("💰 حساب المستحقات", use_container_width=True):
+                    # استخراج البيانات من النصوص
+                    all_text = "\n\n".join(texts)
+                    ents = di.entities(all_text)
+                    bs = ents.get("basic_salary") or 8000
+                    sy = ents.get("service_years") or 5
+                    result = calculate_total(bs, bs * 1.25, sy, 0, 0, True)
+                    st.session_state.calculator_result = result
+                    st.success("✅ تم الحساب، انتقل إلى 'المستشار' لمشاهدة النتائج")
 
 # ------ 3. التدقيق ------
 with t_audit:
@@ -574,6 +616,7 @@ with t_law:
         for r in results[:5]:
             with st.expander(f"{r.get('law_name', 'غير معروف')} - {r.get('article', 'مادة')}"):
                 st.markdown(f"**النص:** {r['text'][:600]}...")
+                st.caption(f"**المصدر:** {r.get('source', 'غير معروف')}")
     else:
         col1, col2 = st.columns(2)
         with col1:
@@ -673,4 +716,4 @@ with t_settings:
     st.markdown("**📦 تصدير البيانات**")
     if st.button("📦 تصدير النسخة الاحتياطية", use_container_width=True):
         export = {"memory": st.session_state.memory, "law_db": st.session_state.law_db, "exported_at": datetime.now().isoformat()}
-        st.download_button("⬇️ تحميل", json.dumps(export, ensure_ascii=False, indent=2).encode("utf-8"), "backup.json", "application/json") 
+        st.download_button("⬇️ تحميل", json.dumps(export, ensure_ascii=False, indent=2).encode("utf-8"), "backup.json", "application/json")
