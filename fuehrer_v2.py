@@ -20,30 +20,300 @@ st.set_page_config(page_title="Führer", page_icon="⚖️", layout="wide", init
 
 # ==================== CSS ====================
 st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
-* { box-sizing: border-box; font-family: 'Cairo', sans-serif; direction: rtl; }
-html, body, .stApp { background: #f5f5f5; }
-[data-testid="stSidebar"], [data-testid="stSidebarNav"] { display: none !important; }
-.hdr { background: #ffffff; border: 1px solid #d0d0d0; border-radius: 6px; padding: 12px 16px; margin-bottom: 14px; text-align: center; }
-.hdr h1 { font-size: 28px; color: #1a1a1a; font-weight: 700; margin: 0; letter-spacing: 2px; }
-.stTabs [data-baseweb="tab-list"] { background: #e8e8e8; border-bottom: 1px solid #d0d0d0; gap: 2px; padding: 4px; border-radius: 6px 6px 0 0; flex-wrap: wrap; }
-.stTabs [data-baseweb="tab"] { background: transparent !important; color: #444 !important; border: 1px solid transparent !important; border-radius: 4px !important; padding: 8px 16px !important; font-size: 14px !important; font-weight: 500; }
-.stTabs [data-baseweb="tab"][aria-selected="true"] { background: #ffffff !important; color: #1a1a1a !important; border-color: #d0d0d0 !important; font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-.stTabs [data-baseweb="tab-panel"] { background: #ffffff; border: 1px solid #d0d0d0; border-radius: 0 0 6px 6px; padding: 20px; }
-.stButton button { background: #e8e8e8 !important; color: #1a1a1a !important; border: 1px solid #cccccc !important; border-radius: 4px !important; font-weight: 600 !important; padding: 8px 20px !important; transition: 0.2s; }
-.stButton button:hover { background: #d5d5d5 !important; border-color: #aaaaaa !important; }
-.stTextInput input, .stTextArea textarea, .stSelectbox select { background: #fafafa !important; color: #1a1a1a !important; border: 1px solid #d0d0d0 !important; border-radius: 4px !important; font-size: 14px !important; }
-.stTextInput input:focus, .stTextArea textarea:focus { border-color: #888888 !important; box-shadow: none !important; }
-[data-testid="stFileUploader"] { background: #fafafa !important; border: 1px dashed #bbbbbb !important; border-radius: 4px !important; }
-.chat-user { background: #e8e8e8; border: 1px solid #d0d0d0; border-radius: 12px 12px 2px 12px; padding: 10px 14px; margin: 6px 0; max-width: 82%; float: right; clear: both; color: #1a1a1a; font-size: 14px; }
-.chat-ai { background: #ffffff; border: 1px solid #d0d0d0; border-radius: 12px 12px 12px 2px; padding: 10px 14px; margin: 6px 0; max-width: 88%; float: left; clear: both; border-right: 3px solid #888888; color: #1a1a1a; font-size: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
-.chat-wrap { overflow: hidden; min-height: 60px; }
-.result-card { background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 4px; padding: 12px 16px; margin: 6px 0; }
-.badge { display: inline-block; background: #e8e8e8; border: 1px solid #d0d0d0; color: #1a1a1a; border-radius: 3px; padding: 2px 8px; font-size: 11px; font-weight: 600; margin: 2px; }
-@media (max-width: 768px) { .hdr h1 { font-size: 22px; } .stTabs [data-baseweb="tab"] { font-size: 12px; padding: 6px 10px; } }
-@media (max-width: 480px) { .hdr h1 { font-size: 18px; } .stTabs [data-baseweb="tab"] { font-size: 11px; padding: 4px 8px; } }
-</style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    direction: rtl;
+}
+
+html, body, .stApp {
+    background: #f7f8fa !important;
+}
+
+/* ================================
+   إخفاء الشريط الجانبي
+   ================================ */
+[data-testid="stSidebar"],
+[data-testid="stSidebarNav"] {
+    display: none !important;
+}
+
+/* ================================
+   الهيدر (رأس الصفحة)
+   ================================ */
+.hdr {
+    background: #ffffff;
+    border-bottom: 2px solid #e8e8e8;
+    padding: 18px 28px;
+    margin-bottom: 20px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    border-radius: 0 0 12px 12px;
+}
+.hdr h1 {
+    font-size: 32px;
+    font-weight: 900;
+    color: #111111;
+    letter-spacing: 3px;
+    margin: 0;
+    text-transform: uppercase;
+}
+.hdr h1::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: #a8a8a8;
+    margin: 8px auto 0;
+    border-radius: 2px;
+}
+
+/* ================================
+   التبويبات (Tabs)
+   ================================ */
+.stTabs [data-baseweb="tab-list"] {
+    background: #f0f1f3;
+    border-bottom: 1px solid #e0e0e0;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 10px 10px 0 0;
+    flex-wrap: wrap;
+}
+.stTabs [data-baseweb="tab"] {
+    background: transparent !important;
+    color: #666666 !important;
+    border: 1px solid transparent !important;
+    border-radius: 6px !important;
+    padding: 10px 20px !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    transition: all 0.25s ease-in-out !important;
+    white-space: nowrap;
+}
+.stTabs [data-baseweb="tab"]:hover {
+    background: rgba(0,0,0,0.04) !important;
+    color: #222222 !important;
+}
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+    background: #ffffff !important;
+    color: #111111 !important;
+    border-color: #cccccc !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+.stTabs [data-baseweb="tab-panel"] {
+    background: #ffffff;
+    border: 1px solid #e8e8e8;
+    border-radius: 0 0 10px 10px;
+    padding: 24px 28px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.02);
+}
+
+/* ================================
+   الأزرار
+   ================================ */
+.stButton button {
+    background: #f0f1f3 !important;
+    color: #222222 !important;
+    border: 1px solid #d5d5d5 !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    padding: 10px 24px !important;
+    transition: all 0.2s ease !important;
+    font-size: 14px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.stButton button:hover {
+    background: #e4e5e8 !important;
+    border-color: #b0b0b0 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transform: translateY(-1px);
+}
+.stButton button:active {
+    transform: translateY(0px);
+}
+
+/* ================================
+   المدخلات (Inputs)
+   ================================ */
+.stTextInput input,
+.stTextArea textarea,
+.stSelectbox select {
+    background: #fcfcfd !important;
+    color: #111111 !important;
+    border: 1px solid #d8d8d8 !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    padding: 12px 16px !important;
+    transition: border-color 0.2s ease;
+}
+.stTextInput input:focus,
+.stTextArea textarea:focus {
+    border-color: #999999 !important;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.03) !important;
+}
+.stTextArea textarea {
+    min-height: 120px;
+}
+
+/* ================================
+   رفع الملفات
+   ================================ */
+[data-testid="stFileUploader"] {
+    background: #fafbfc !important;
+    border: 2px dashed #d0d0d0 !important;
+    border-radius: 8px !important;
+    padding: 24px !important;
+    transition: border-color 0.3s ease;
+}
+[data-testid="stFileUploader"]:hover {
+    border-color: #aaaaaa !important;
+}
+[data-testid="stFileUploader"] div {
+    color: #444444 !important;
+}
+
+/* ================================
+   المحادثة (Chat)
+   ================================ */
+.chat-wrap {
+    overflow: hidden;
+    min-height: 80px;
+}
+.chat-user {
+    background: #f0f1f3;
+    border: 1px solid #e0e0e0;
+    border-radius: 14px 14px 2px 14px;
+    padding: 14px 18px;
+    margin: 10px 0;
+    max-width: 78%;
+    float: right;
+    clear: both;
+    color: #111111;
+    font-size: 15px;
+    line-height: 1.7;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+}
+.chat-ai {
+    background: #ffffff;
+    border: 1px solid #e8e8e8;
+    border-radius: 14px 14px 14px 2px;
+    padding: 14px 18px;
+    margin: 10px 0;
+    max-width: 84%;
+    float: left;
+    clear: both;
+    border-right: 4px solid #b0b0b0;
+    color: #111111;
+    font-size: 15px;
+    line-height: 1.7;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* ================================
+   البطاقات (Cards)
+   ================================ */
+.result-card {
+    background: #fafafc;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 8px 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+}
+
+/* ================================
+   الشارات (Badges)
+   ================================ */
+.badge {
+    display: inline-block;
+    background: #f0f1f3;
+    border: 1px solid #d8d8d8;
+    color: #333333;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 3px 2px;
+}
+
+/* ================================
+   المقاييس (Metrics)
+   ================================ */
+.metric-card {
+    background: #fafafc;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 16px 20px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+}
+.metric-card .label {
+    font-size: 13px;
+    color: #777777;
+    font-weight: 600;
+}
+.metric-card .value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #111111;
+    margin-top: 4px;
+}
+.metric-card .sub {
+    font-size: 11px;
+    color: #999999;
+    margin-top: 4px;
+}
+
+/* ================================
+   شاشات صغيرة
+   ================================ */
+@media (max-width: 768px) {
+    .hdr h1 {
+        font-size: 24px;
+    }
+    .hdr {
+        padding: 14px 16px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-size: 13px !important;
+        padding: 8px 14px !important;
+    }
+    .stTabs [data-baseweb="tab-panel"] {
+        padding: 16px 18px;
+    }
+    .chat-user, .chat-ai {
+        max-width: 92%;
+        font-size: 14px;
+    }
+    .metric-card .value {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hdr h1 {
+        font-size: 20px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+    }
+    .stTabs [data-baseweb="tab-panel"] {
+        padding: 12px 14px;
+    }
+    .chat-user, .chat-ai {
+        font-size: 13px;
+        padding: 10px 14px;
+    }
+    .metric-card .value {
+        font-size: 18px;
+    }
+}
 """, unsafe_allow_html=True)
 
 # ==================== التهيئة ====================
