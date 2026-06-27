@@ -34,7 +34,7 @@ html, body, .stApp {
    ================================ */
 .hdr {
     background: #2c2c3e;
-    border-bottom: 3px solid #d4a820;
+    border-bottom: 3px solid gold;
     padding: 28px 32px;
     margin-bottom: 28px;
     text-align: center;
