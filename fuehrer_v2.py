@@ -19,7 +19,7 @@ html, body, .stApp {
 
 .hdr {
     background: #2c2c3e;
-    border-bottom: 3px solid #rgb(212, 168, 32);
+    border-bottom: 3px solid rgb(212, 168, 32);
     padding: 28px 32px;
     margin-bottom: 28px;
     text-align: center;
@@ -40,7 +40,7 @@ html, body, .stApp {
     display: block;
     width: 80px;
     height: 4px;
-    background: #rgb(212, 168, 32);
+    background: rgb(212, 168, 32);
     margin: 12px auto 0;
     border-radius: 2px;
 }
@@ -68,14 +68,14 @@ html, body, .stApp {
 
 .stTabs [data-baseweb="tab"]:hover {
     background: rgba(212, 168, 32, 0.06) !important;
-    color: #rgb(212, 168, 32) !important;
-    border-color: #rgb(212, 168, 32) !important;
+    color: rgb(212, 168, 32) !important;
+    border-color: rgb(212, 168, 32) !important;
 }
 
 .stTabs [data-baseweb="tab"][aria-selected="true"] {
     background: #2c2c3e !important;
     color: #ffffff !important;
-    border-color: #rgb(212, 168, 32) !important;
+    border-color: rgb(212, 168, 32) !important;
     font-weight: 700 !important;
 }
 
@@ -89,7 +89,7 @@ html, body, .stApp {
 .stButton button {
     background: #2c2c3e !important;
     color: #ffffff !important;
-    border: 1.5px solid #rgb(212, 168, 32) !important;
+    border: 1.5px solid rgb(212, 168, 32) !important;
     border-radius: 8px !important;
     font-weight: 700 !important;
     padding: 12px 28px !important;
@@ -98,9 +98,9 @@ html, body, .stApp {
 }
 
 .stButton button:hover {
-    background: #rgb(212, 168, 32) !important;
+    background: rgb(212, 168, 32) !important;
     color: #1a1a2e !important;
-    border-color: #rgb(212, 168, 32) !important;
+    border-color: rgb(212, 168, 32) !important;
 }
 
 .stTextInput input,
@@ -116,12 +116,12 @@ html, body, .stApp {
 
 .stTextInput input:focus,
 .stTextArea textarea:focus {
-    border-color: #rgb(212, 168, 32) !important;
+    border-color: rgb(212, 168, 32) !important;
 }
 
 [data-testid="stFileUploader"] {
     background: #fafafa !important;
-    border: 2px dashed #rgb(212, 168, 32) !important;
+    border: 2px dashed rgb(212, 168, 32) !important;
     border-radius: 12px !important;
     padding: 32px !important;
 }
@@ -132,7 +132,7 @@ html, body, .stApp {
 
 .chat-user {
     background: #2c2c3e;
-    border: 1px solid #rgb(212, 168, 32);
+    border: 1px solid rgb(212, 168, 32);
     border-radius: 16px 16px 2px 16px;
     padding: 16px 20px;
     margin: 12px 0;
@@ -153,7 +153,7 @@ html, body, .stApp {
     max-width: 84%;
     float: left;
     clear: both;
-    border-right: 4px solid #rgb(212, 168, 32);
+    border-right: 4px solid rgb(212, 168, 32);
     color: #1a1a2e;
     font-size: 15px;
     line-height: 1.7;
@@ -165,13 +165,13 @@ html, body, .stApp {
     border-radius: 10px;
     padding: 18px 22px;
     margin: 10px 0;
-    border-right: 4px solid #rgb(212, 168, 32);
+    border-right: 4px solid rgb(212, 168, 32);
 }
 
 .badge {
     display: inline-block;
     background: #f0f1f3;
-    border: 1px solid #rgb(212, 168, 32);
+    border: 1px solid rgb(212, 168, 32);
     color: #1a1a2e;
     border-radius: 6px;
     padding: 4px 12px;
@@ -186,7 +186,7 @@ html, body, .stApp {
     border-radius: 10px;
     padding: 18px 22px;
     text-align: center;
-    border-top: 3px solid #rgb(212, 168, 32);
+    border-top: 3px solid rgb(212, 168, 32);
 }
 
 .metric-card .label {
