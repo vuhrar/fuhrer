@@ -756,7 +756,7 @@ with col2:
     
 with st.spinner("⚖️ يبحث في القوانين..."):
     resp = call_ai(full_prompt)
-        st.session_state.current_msgs.append({"role": "assistant", "content": resp, "ts": ts})
+    st.session_state.current_msgs.append({"role": "assistant", "content": resp, "ts": ts})
         sess["messages"] = st.session_state.current_msgs
         save_session(st.session_state.current_sid, sess)
     if len(resp) > 80 and "❌" not in resp:
