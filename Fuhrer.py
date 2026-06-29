@@ -797,7 +797,7 @@ with col1:
  if st.button("تحليل شامل",
 use_container_width=True):
                         with st.spinner("جاري التحليل..."):
-combined = "\n\n".join(texts)
+                combined = "\n\n".join(texts)
 analysis = generate_analysis(combined)
 st.session_state.analysis_result = analysis
 st.session_state.uploaded_texts = texts
