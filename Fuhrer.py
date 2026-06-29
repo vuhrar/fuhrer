@@ -796,7 +796,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
  if st.button("تحليل شامل",
     use_container_width=True):
- with st.spinner("جاري التحليل..."):
+with st.spinner("جاري التحليل..."):
 combined = "\n\n".join(texts)
 analysis = generate_analysis(combined)
 st.session_state.analysis_result = analysis
