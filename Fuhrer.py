@@ -768,9 +768,9 @@ with col2:
         sess["messages"] = []
 save_session(st.session_state.current_sid, sess)
 st.rerun()
-    with t_files:
-st.subheader("الملفات")
-uploaded = st.file_uploader("اختر الملفات (PDF, DOCX, TXT, JSON)", type=["pdf", "docx", "txt", "json"], accept_multiple_files=True, label_visibility="collapsed")
+with t_files:
+ st.subheader("الملفات")
+ uploaded = st.file_uploader("اختر الملفات (PDF, DOCX, TXT, JSON)", type=["pdf", "docx", "txt", "json"], accept_multiple_files=True, label_visibility="collapsed")
 if uploaded:
 st.info(f"تم رفع {len(uploaded)} ملف")
         di = DocIntel()
