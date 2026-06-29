@@ -720,10 +720,7 @@ with col1:
     results = st.session_state.rag_engine.search(user_inp, top_k=3)
     context = "\n".join([doc for doc, meta in results])
     
-    # ترجمة السياق إلى الإنجليزية (اختياري)
-    if any('\u0600' <= c <= '\u06ff' for c in user_inp):
-        context_en = st.session_state.translator.translate(context)
-    else:
+
         context_en = context
     
     # توليد الإجابة مع السياق
