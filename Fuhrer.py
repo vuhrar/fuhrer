@@ -835,7 +835,8 @@ with col3:
             with st.spinner("جاري فهرسة القوانين..."):
                 count = index_law_db()
                 st.success(f"✅ تم فهرسة {count} جزء")
-st.subheader("التدقيق الإداري والقانوني")
+with t_audit:
+    st.subheader("التدقيق الإداري والقانوني")
     text_input = st.text_area("الصق النص هنا", height=200, placeholder="مثال: تم فصل الموظف محمد بدون تحقيق...")
     if st.button("تدقيق", use_container_width=True) and text_input.strip():
         with st.spinner("جاري التحليل..."):
@@ -888,7 +889,6 @@ st.subheader("التدقيق الإداري والقانوني")
                         st.markdown(f"- {ref}")
             else:
                 st.error("المحللات المتقدمة غير مثبتة. تأكد من وجود الملفات: procedural_analyzer.py, discrepancy_analyzer.py")
-
 with t_docs:
     st.subheader("توليد المستندات القانونية")
     with st.form("doc_form"):
