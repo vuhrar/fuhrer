@@ -17,6 +17,8 @@ from doc_processing import DocIntel, extract_laws_from_pdf, extract_laws_from_do
 from rules_engine import RULES, apply_rules
 from ai_client import AIClient
 import config
+from labor_law_rag import LaborLawRAG
+from labor_translator import LaborTranslator
 
 try:
     from langchain.text_splitter import RecursiveCharacterTextSplitter
