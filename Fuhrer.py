@@ -702,22 +702,40 @@ with t_ai:
             content = msg["content"].replace("\n", "<br>")
             ts = msg.get("ts", "")
             st.markdown(f'<div class="{cls}">{ico} {content}<br><small style="color:#999;font-size:10px">⏱ {ts}</small></div>', unsafe_allow_html=True)
+user_inp = st.text_area("اكتب سؤالك هنا", value=st.session_state.pending_q, height=100, placeholder="مثال: ما هي مكافأة نهاية الخدمة？")
+col1, col2 = st.columns([3, 1])
 
-        user_inp = st.text_area("اكتب سؤالك هنا", value=st.session_state.pending_q, height=100, placeholder="مثال: ما هي مكافأة نهاية الخدمة؟")
-        col1, col2 = st.columns([3, 1])
-        
 with col1:
-    if st.button("إرسال", use_container_width=True) and user_inp.strip(): 
+    if st.button("إرسال", use_container_width=True) and user_inp.strip():
         st.session_state.pending_q = ""
         ts = datetime.now().strftime("%H:%M")
         st.session_state.current_msgs.append({"role": "user", "content": user_inp, "ts": ts})
-    
-    # البحث الدلالي في نظام العمل
-    results = st.session_state.rag_engine.search(user_inp, top_k=3)
-    context = "\n".join([doc for doc, meta in results])
-    
-    context_en = context
-    
+        
+        # البحث الدلالي في نظام العمل
+        results = st.session_state.rag_engine.search(user_inp, top_k=3)
+        context = "\n".join([doc for doc, meta in results])
+        context_en = context
+        
+        full_prompt = f"السياق القانوني:\n{context_en}\n\nالسؤال: {user_inp}\n\nالإجابة:"
+        
+        with st.spinner("⚖️ يبحث في القوانين..."):
+            resp = call_ai(full_prompt)
+        
+        st.session_state.current_msgs.append({"role": "assistant", "content": resp, "ts": ts})
+        sess["messages"] = st.session_state.current_msgs
+        save_session(st.session_state.current_sid, sess)
+        
+        if len(resp) > 80 and "❌" not in resp:
+            mem_add(f"س: {user_inp[:80]} | ج: {resp[:150]}...", tags=["محادثة", st.session_state.case_type], cat="محادثة")
+        
+        st.rerun()
+
+with col2:
+    if st.button("مسح", use_container_width=True):
+        st.session_state.current_msgs = []
+        sess["messages"] = []
+        save_session(st.session_state.current_sid, sess)
+        st.rerun()
     # توليد الإجابة مع السياق
     if context_en:
         full_prompt = f"السياق القانوني:\n{context_en}\n\nالسؤال: {user_inp}\n\nالإجابة:"
