@@ -784,27 +784,27 @@ st.text_area("النص المستخرج", txt[:500] + ("..." if len(txt) > 500 e
 ents = di.entities(txt)
 if ents.get("articles"):
                         st.markdown("**المواد:** " + "".join(f'<span class="badge">{a}</span>' for a in ents["articles"][:6]), unsafe_allow_html=True)
-                    if ents.get("dates"):
+if ents.get("dates"):
                         st.markdown(f"**تواريخ:** {', '.join(ents['dates'][:5])}")
-                    if ents.get("amounts"):
+if ents.get("amounts"):
                         st.markdown(f"**مبالغ:** {', '.join(ents['amounts'][:5])}")
-                else:
-                    st.warning("⚠️ لم يُستخرج نص من هذا الملف")
-        if texts:
-            st.session_state.docs = texts
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                if st.button("تحليل شامل", use_container_width=True):
-                    with st.spinner("جاري التحليل..."):
-                        combined = "\n\n".join(texts)
-                        analysis = generate_analysis(combined)
-                        st.session_state.analysis_result = analysis
-                        st.session_state.uploaded_texts = texts
-                        st.success("✅ تم التحليل، انتقل إلى 'المحادثة' لطرح الأسئلة")
-            with col2:
-                if st.button("استخراج القوانين", use_container_width=True):
-                    total = 0
-                    for f in uploaded:
+else:
+st.warning("⚠️ لم يُستخرج نص من هذا الملف")
+if texts:
+st.session_state.docs = texts
+col1, col2, col3 = st.columns(3)
+with col1:
+if st.button("تحليل شامل", use_container_width=True):
+with st.spinner("جاري التحليل..."):
+combined = "\n\n".join(texts)
+analysis = generate_analysis(combined)
+st.session_state.analysis_result = analysis
+st.session_state.uploaded_texts = texts
+st.success("✅ تم التحليل، انتقل إلى 'المحادثة' لطرح الأسئلة")
+with col2:
+if st.button("استخراج القوانين", use_container_width=True):
+total = 0
+for f in uploaded:
                         raw = _bytes(f)
                         ext = (f.name or "").rsplit(".", 1)[-1].lower()
                         if ext == "pdf":
