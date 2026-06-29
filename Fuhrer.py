@@ -498,6 +498,13 @@ if "rag_engine" not in st.session_state:
     st.session_state.rag_engine = LaborLawRAG()
 if "translator" not in st.session_state:
     st.session_state.translator = LaborTranslator()
+try:
+    from labor_law_rag import LaborLawRAG
+    from labor_translator import LaborTranslator
+    RAG_AVAILABLE = True
+except ImportError:
+    RAG_AVAILABLE = False
+    print("⚠️ ملفات RAG غير موجودة. تأكد من وجود labor_law_rag.py و labor_translator.py")
 
 if st.session_state.bg_b64:
     st.markdown(f"""
