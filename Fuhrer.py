@@ -702,10 +702,35 @@ with t_ai:
         col1, col2 = st.columns([3, 1])
         
         with col1:
-           if st.button("إرسال", use_container_width=True) and user_inp.strip():
+         if st.button("إرسال", use_container_width=True) and user_inp.strip():
     st.session_state.pending_q = ""
     ts = datetime.now().strftime("%H:%M")
     st.session_state.current_msgs.append({"role": "user", "content": user_inp, "ts": ts})
+    
+    # البحث الدلالي في نظام العمل
+    results = st.session_state.rag_engine.search(user_inp, top_k=3)
+    context = "\n".join([doc for doc, meta in results])
+    
+    # ترجمة السياق إلى الإنجليزية (اختياري)
+    if any('\u0600' <= c <= '\u06ff' for c in user_inp):
+        context_en = st.session_state.translator.translate(context)
+    else:
+        context_en = context
+    
+    # توليد الإجابة مع السياق
+    if context_en:
+        full_prompt = f"السياق القانوني:\n{context_en}\n\nالسؤال: {user_inp}\n\nالإجابة:"
+    else:
+        full_prompt = user_inp
+    
+    with st.spinner("⚖️ يبحث في القوانين..."):
+        resp = call_ai(full_prompt)
+    st.session_state.current_msgs.append({"role": "assistant", "content": resp, "ts": ts})
+    sess["messages"] = st.session_state.current_msgs
+    save_session(st.session_state.current_sid, sess)
+    if len(resp) > 80 and "❌" not in resp:
+        mem_add(f"س: {user_inp[:80]} | ج: {resp[:150]}...", tags=["محادثة", st.session_state.case_type], cat="محادثة")
+    st.rerun()
     
     # البحث الدلالي في نظام العمل
     results = st.session_state.rag_engine.search(user_inp, top_k=3)
