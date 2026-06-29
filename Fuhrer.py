@@ -820,7 +820,7 @@ save_json(LAW_FILE, st.session_state.law_db)
 st.success(f"✅ تم استخراج {total} مادة قانونية")
 if RAG_AVAILABLE and total > 0:
                 with st.spinner("جاري فهرسة القوانين في RAG..."):
-count = index_law_db()
+                    count = index_law_db()
 st.success(f"✅ تم فهرسة {count} جزء في قاعدة المتجهات")
 if st.button("فهرسة PDF كنظام عمل", use_container_width=True):
 for f in uploaded:
