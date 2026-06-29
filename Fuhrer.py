@@ -794,7 +794,7 @@ if texts:
  st.session_state.docs = texts
 col1, col2, col3 = st.columns(3)
 with col1:
-if st.button("تحليل شامل",
+ if st.button("تحليل شامل",
     use_container_width=True):
 with st.spinner("جاري التحليل..."):
 combined = "\n\n".join(texts)
@@ -803,7 +803,7 @@ st.session_state.analysis_result = analysis
 st.session_state.uploaded_texts = texts
 st.success("✅ تم التحليل، انتقل إلى 'المحادثة' لطرح الأسئلة")
 with col2:
-if st.button("استخراج القوانين", use_container_width=True):
+ if st.button("استخراج القوانين", use_container_width=True):
 total = 0
 for f in uploaded:
                         raw = _bytes(f)
