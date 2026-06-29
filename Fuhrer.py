@@ -703,9 +703,9 @@ with t_ai:
         
 with col1:
         if st.button("إرسال", use_container_width=True) and user_inp.strip():
-    st.session_state.pending_q = ""
-    ts = datetime.now().strftime("%H:%M")
-    st.session_state.current_msgs.append({"role": "user", "content": user_inp, "ts": ts})
+        st.session_state.pending_q = ""
+        ts = datetime.now().strftime("%H:%M")
+        st.session_state.current_msgs.append({"role": "user", "content": user_inp, "ts": ts})
     
     # البحث الدلالي في نظام العمل
     results = st.session_state.rag_engine.search(user_inp, top_k=3)
