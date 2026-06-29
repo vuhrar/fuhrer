@@ -738,7 +738,7 @@ with col1:
     context = "\n".join([doc for doc, meta in results])
     
     # ترجمة السياق إلى الإنجليزية (
-        context_en = context
+    context_en = context
     
     # توليد الإجابة مع السياق
     if context_en:
