@@ -793,7 +793,7 @@ else:
 if texts:
  st.session_state.docs = texts
 col1, col2, col3 = st.columns(3)
-with col1:
+ with col1:
 if st.button("تحليل شامل",
 use_container_width=True):
  with st.spinner("جاري التحليل..."):
