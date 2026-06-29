@@ -702,7 +702,7 @@ with t_ai:
         col1, col2 = st.columns([3, 1])
         
 with col1:
-    if st.button("إرسال", use_container_width=True) and user_inp.strip():
+        if st.button("إرسال", use_container_width=True) and user_inp.strip():
     st.session_state.pending_q = ""
     ts = datetime.now().strftime("%H:%M")
     st.session_state.current_msgs.append({"role": "user", "content": user_inp, "ts": ts})
