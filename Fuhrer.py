@@ -716,7 +716,11 @@ with col1:
         context = "\n".join([doc for doc, meta in results])
         context_en = context
         
-        full_prompt = f"السياق القانوني:\n{context_en}\n\nالسؤال: {user_inp}\n\nالإجابة:"
+        # توليد الإجابة مع السياق
+        if context_en:
+            full_prompt = f"السياق القانوني:\n{context_en}\n\nالسؤال: {user_inp}\n\nالإجابة:"
+        else:
+            full_prompt = user_inp
         
         with st.spinner("⚖️ يبحث في القوانين..."):
             resp = call_ai(full_prompt)
@@ -736,20 +740,6 @@ with col2:
         sess["messages"] = []
         save_session(st.session_state.current_sid, sess)
         st.rerun()
-    # توليد الإجابة مع السياق
-     if context_en:
-        full_prompt = f"السياق القانوني:\n{context_en}\n\nالسؤال: {user_inp}\n\nالإجابة:"
-     else:
-        full_prompt = user_inp
-    
-    with st.spinner("⚖️ يبحث في القوانين..."):
-        resp = call_ai(full_prompt)
-    st.session_state.current_msgs.append({"role": "assistant", "content": resp, "ts": ts})
-    sess["messages"] = st.session_state.current_msgs
-    save_session(st.session_state.current_sid, sess)
-    if len(resp) > 80 and "❌" not in resp:
-        mem_add(f"س: {user_inp[:80]} | ج: {resp[:150]}...", tags=["محادثة", st.session_state.case_type], cat="محادثة")
-    st.rerun()
     
     # البحث الدلالي في نظام العمل
     results = st.session_state.rag_engine.search(user_inp, top_k=3)
