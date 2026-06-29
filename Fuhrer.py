@@ -763,7 +763,7 @@ if len(resp) > 80 and "❌" not in resp:
         mem_add(f"س: {user_inp[:80]} | ج: {resp[:150]}...", tags=["محادثة", st.session_state.case_type], cat="محادثة")
 st.rerun()
 with col2:
-if st.button("مسح", use_container_width=True):
+ if st.button("مسح", use_container_width=True):
         st.session_state.current_msgs = []
         sess["messages"] = []
 save_session(st.session_state.current_sid, sess)
