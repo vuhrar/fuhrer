@@ -825,7 +825,7 @@ save_json(LAW_FILE, st.session_state.law_db)
 
 
     if st.button("فهرسة PDF كنظام عمل", use_container_width=True):
-        for f in uploaded:
+for f in uploaded:
             if f.name.endswith('.pdf'):
                 articles = st.session_state.rag_engine.parse_pdf(_bytes(f))
                 count = st.session_state.rag_engine.index_articles(articles)
