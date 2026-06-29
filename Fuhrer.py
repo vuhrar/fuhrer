@@ -700,6 +700,7 @@ with t_ai:
 
         user_inp = st.text_area("اكتب سؤالك هنا", value=st.session_state.pending_q, height=100, placeholder="مثال: ما هي مكافأة نهاية الخدمة؟")
         col1, col2 = st.columns([3, 1])
+        
         with col1:
            if st.button("إرسال", use_container_width=True) and user_inp.strip():
     st.session_state.pending_q = ""
