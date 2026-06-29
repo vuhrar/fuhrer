@@ -834,7 +834,7 @@ with col3:
         if st.button("🧠 فهرسة RAG", use_container_width=True):
             with st.spinner("جاري فهرسة القوانين..."):
                 count = index_law_db()
-                st.success(f"✅ تم فهرسة {count} جزء"):
+                st.success(f"✅ تم فهرسة {count} جزء")
 st.subheader("التدقيق الإداري والقانوني")
     text_input = st.text_area("الصق النص هنا", height=200, placeholder="مثال: تم فصل الموظف محمد بدون تحقيق...")
     if st.button("تدقيق", use_container_width=True) and text_input.strip():
